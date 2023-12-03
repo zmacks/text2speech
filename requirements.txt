@@ -1,0 +1,5 @@
+pyttsx3
+openai
+pyaudio
+wave
+python-dotenv
