@@ -1,12 +1,14 @@
-import pyttsx3
+# import pyttsx3
+from openai import OpenAI
 import openai
-import pyaudio
+# import pyaudio
 import wave
 import logging
 import os
-import dotenv
+from pathlib import Path
+# import dotenv
 
-dotenv.load_dotenv()
+# dotenv.load_dotenv()
 # TODO: Look into the soundboard looking thing with buttons. (re: an interface)
 # TODO: Map button press on the streamdeck to intent
 # TODO: Draft prompt
@@ -16,14 +18,16 @@ dotenv.load_dotenv()
 # TODO: Translate transcription into intent
 # TODO: Craft prompt to respond to previous generated text (easy)
 
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 logging.basicConfig(filename='main.log', level=logging.DEBUG)
 
 def list_engines():
     # list engines
-    engines = openai.Engine.list()
+    # TODO: The resource 'Engine' has been deprecated
+    # engines = openai.Engine.list()
 
     for engine in engines.data:
         print(engine.id)
@@ -50,29 +54,25 @@ def complete(user_input,
 
     else:
         # create a completion
-        completion = openai.Completion.create(
-            engine=engine,
-            prompt=user_input,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-            logit_bias=logit_bias,
-            presence_penalty=presence_penalty
-        )
+        completion = client.completions.create(engine=engine,
+        prompt=user_input,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        top_p=top_p,
+        logit_bias=logit_bias,
+        presence_penalty=presence_penalty)
 
     logging.info("Created completion %s...",completion)
     return completion
 
 def complete_chat(messages,model,logit_bias,temperature,max_tokens,top_p,presence_penalty):
-    completion = openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-        logit_bias=logit_bias,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        top_p=top_p,
-        presence_penalty=presence_penalty
-    )
+    completion = client.chat.completions.create(model=model,
+    messages=messages,
+    logit_bias=logit_bias,
+    temperature=temperature,
+    max_tokens=max_tokens,
+    top_p=top_p,
+    presence_penalty=presence_penalty)
 
     return completion
 
@@ -100,14 +100,25 @@ def get_voices(engine):
     voices = engine.getProperty('voices')
     return voices
 
-def text2speech(text,voice=None):
+# def text2speech(text,voice=None):
+#     logging.info("Speaking...")
+#     engine = pyttsx3.init()
+#     voices = get_voices(engine)
+#     voice = voices[7].id
+#     engine.setProperty('voice', voice)
+#     engine.say(text)
+#     engine.runAndWait()
+
+def text2speech(text):
     logging.info("Speaking...")
-    engine = pyttsx3.init()
-    voices = get_voices(engine)
-    voice = voices[7].id
-    engine.setProperty('voice', voice)
-    engine.say(text)
-    engine.runAndWait()
+    speech_file_path = Path(__file__).parent / "speech.mp3"
+    response = openai.audio.speech.create(
+        model="tts-1",
+        voice="alloy",
+        input=text
+    )
+    response.stream_to_file(speech_file_path)
+    os.system(f"afplay {speech_file_path}")
 
 def record(seconds=5,output_file = "output.wav"):
     logging.info("Recording...")
@@ -150,7 +161,7 @@ def record(seconds=5,output_file = "output.wav"):
 def transcribe(file_name):
     logging.info("Transcribing %s...",file_name)
     audio_file = open(file_name, "rb")
-    transcript = openai.Audio.transcribe("whisper-1", audio_file)
+    transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
     logging.info("Transcribed: %s",transcript)
     return transcript
 
@@ -185,8 +196,9 @@ def main():
     """
     # TODO: Allow the user to view the dialogue line by line interactively
     # TODO: Display a call-to-action in the CLI with instructions
-    file_name = "test.wav"
-    record(output_file=file_name,seconds=5)
+    # file_name = "test.wav"
+    file_name = "speech.mp3"
+    # record(output_file=file_name,seconds=5)
     transcription = transcribe(file_name)
     content,_,_ = parse(transcription)
 
@@ -210,3 +222,7 @@ def main():
 
 if __name__=="__main__":
     main()
+
+
+import os
+os.system("afplay file.mp3")     

@@ -1,0 +1,13 @@
+[tool.poetry]
+name = 'text2speech'
+version = '0.0.1'
+description = "A little fun tool to interact with LLM's"
+authors = [
+    "Josh Mackey <joshzmackey@gmail.com>",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.11"
+openai = "^1.6.1"
+# pyaudio = "^0.2.14"
+# python-dotenv = "^1.0.0"
