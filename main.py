@@ -33,7 +33,6 @@ def list_engines():
         print(engine.id)
 
 def complete(user_input,
-             engine="text-davinci-003",
              model="gpt-3.5-turbo",
              temperature=0,
              max_tokens=16,
@@ -54,7 +53,7 @@ def complete(user_input,
 
     else:
         # create a completion
-        completion = client.completions.create(engine=engine,
+        completion = client.completions.create(model=model,
         prompt=user_input,
         temperature=temperature,
         max_tokens=max_tokens,
@@ -65,6 +64,7 @@ def complete(user_input,
     logging.info("Created completion %s...",completion)
     return completion
 
+# TODO: Use only client.chat.completions.create for all completions, not the complete() wrapper
 def complete_chat(messages,model,logit_bias,temperature,max_tokens,top_p,presence_penalty):
     completion = client.chat.completions.create(model=model,
     messages=messages,
@@ -162,6 +162,7 @@ def transcribe(file_name):
     logging.info("Transcribing %s...",file_name)
     audio_file = open(file_name, "rb")
     transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
+    print(transcript)
     logging.info("Transcribed: %s",transcript)
     return transcript
 
@@ -200,13 +201,13 @@ def main():
     file_name = "speech.mp3"
     # record(output_file=file_name,seconds=5)
     transcription = transcribe(file_name)
-    content,_,_ = parse(transcription)
+    # content,_,_ = parse(transcription)
 
     # System prompt
     system = "You are a fictional character in my Dungeons and Dragons campaign. I want you to speak as a character who is hardy and tough and maybe a dwarf."
 
     # A crude dialogue between DM and PC
-    dialogue = mock_dialogue(system, content, default="dnd")
+    dialogue = mock_dialogue(system, content=transcription.text, default="dnd")
 
     completion = complete(
         user_input=dialogue,
