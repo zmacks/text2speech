@@ -1,5 +1,5 @@
-pyttsx3
+# pyttsx3 # Testing the OpenAI client.audio.speech.create() api instead of this
 openai
-pyaudio
-wave
-python-dotenv
+pyaudio # additional setup here: https://pypi.org/project/PyAudio/
+# wave # This is a built-in module
+# python-dotenv
